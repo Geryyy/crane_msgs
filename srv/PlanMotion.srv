@@ -1,0 +1,9 @@
+geometry_msgs/PoseStamped goal
+crane_msgs/Payload payload
+bool avoid_collisions true
+float64 speed_scale 1.0
+---
+bool success
+string message
+trajectory_msgs/JointTrajectory trajectory
+geometry_msgs/PoseStamped[] tcp_path

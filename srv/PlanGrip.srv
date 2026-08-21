@@ -1,0 +1,12 @@
+uint8 PHASE_DESCEND=1
+uint8 PHASE_CLOSE=2
+uint8 PHASE_OPEN=3
+uint8 PHASE_LIFT=4
+uint8 phase
+geometry_msgs/PoseStamped goal
+crane_msgs/Payload payload
+float64 speed_scale 1.0
+---
+bool success
+string message
+trajectory_msgs/JointTrajectory trajectory
