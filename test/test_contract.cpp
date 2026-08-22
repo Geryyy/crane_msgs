@@ -18,6 +18,7 @@ TEST(CraneMsgsContract, SupervisorModesAndFaultsAreFrozen)
   EXPECT_EQ(crane_msgs::msg::SupervisorStatus::MODE_MPC, 3U);
   EXPECT_EQ(crane_msgs::msg::SupervisorStatus::FAULT_NONE, 0U);
   EXPECT_EQ(crane_msgs::msg::SupervisorStatus::FAULT_INTERLOCK, 8U);
+  EXPECT_EQ(crane_msgs::msg::SupervisorStatus::FAULT_NOT_COMMISSIONED, 9U);
 }
 
 TEST(CraneMsgsContract, CollisionShapesAndGripPhasesAreFrozen)
