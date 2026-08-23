@@ -2,7 +2,7 @@
 
 Frozen cross-layer contracts for the new concrete-block crane architecture.
 The definitions are governed by
-[`wiki/Implementation/ROS 2 Interfaces.md`](../../wiki/Implementation/ROS%202%20Interfaces.md)
+[`wiki/implementation/ros2_interfaces.md`](../../wiki/implementation/ros2_interfaces.md)
 §1 and §6. They use SI units and the absolute `/crane/...` namespace. Generated
 code is build output and is not committed.
 
