@@ -25,6 +25,7 @@ from crane_msgs.msg import (
     PayloadEstimate,
     PendulumState,
     SupervisorStatus,
+    VelocityControllerHealth,
 )
 from crane_msgs.srv import PlanGrip, PlanMotion, SetMode
 from rclpy.node import Node
@@ -106,6 +107,14 @@ def _stream_contracts():
             JointTrajectory,
             _qos(transient_local=True),
             _message(JointTrajectory),
+            "",
+        ),
+        StreamContract(
+            "/crane/velocity_controller/health",
+            "crane_msgs/msg/VelocityControllerHealth",
+            VelocityControllerHealth,
+            _qos(),
+            _message(VelocityControllerHealth),
             "",
         ),
         StreamContract(

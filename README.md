@@ -14,8 +14,14 @@ boundaries. Their types are intentionally not copied into this package.
 
 Public fields, field order, constants, defaults, QoS, and frame semantics are
 frozen before algorithm packages depend on them. The schema test compares all
-nine source definitions, including every field and constant. Breaking a
+ten source definitions, including every field and constant. Breaking a
 contract requires updating the wiki and this package in the same change.
+
+Adding a definition is not breaking it. PRD §15's amendment rule is
+additive-only without ceremony — a new message, a new constant, a new service,
+with the interface-page edit in the same commit — while adding, removing or
+retyping a field of an existing message names every consumer and is a slice of
+its own.
 
 ## Topic contract
 
@@ -31,6 +37,7 @@ policy. Every listed depth is `keep last`.
 | `/crane/payload_estimate` | `crane_msgs/PayloadEstimate` | `payload_estimator` → planner, MPC, world model | 10 Hz | reliable, transient-local | `K8_rotator_lower_part`; `m_r_x/m_r_y` are in K8 |
 | `/crane/mpc/horizon` | `trajectory_msgs/JointTrajectory` | `crane_mpc` → `crane_velocity_controller` | 25 Hz | reliable, depth 1 | joint space; `header.frame_id` empty |
 | `/crane/reference` | `trajectory_msgs/JointTrajectory` | action frontend/planner adapter → MPC, supervisor | per motion | reliable, transient-local | joint space; `header.frame_id` empty |
+| `/crane/velocity_controller/health` | `crane_msgs/VelocityControllerHealth` | `crane_velocity_controller` → supervisor | 20 Hz | reliable, depth 1 | status data; `header.frame_id` empty |
 | `/crane/supervisor/status` | `crane_msgs/SupervisorStatus` | supervisor → task, operator | 20 Hz | reliable, depth 1 | status data; `header.frame_id` empty |
 | `/crane/remote_ctrl_states` | `epsilon_crane_msgs/RemoteCtrlStates` | GPIO controller → supervisor, task | 20 Hz | reliable, depth 1 | no geometric frame |
 | `/crane/collision_scene` | `crane_msgs/CollisionScene` | CBS world model → planner | on change | reliable, transient-local | geometric data in `K0_mounting_base` |
@@ -92,6 +99,7 @@ The source files are the normative field order and defaults:
 | `msg/PendulumState.msg` | passive tip/tilt position, velocity, covariance, and health |
 | `msg/PayloadEstimate.msg` | mass and K8 payload moment estimate |
 | `msg/SupervisorStatus.msg` | mode, fault, tracking, working-cell, deadman state |
+| `msg/VelocityControllerHealth.msg` | the inner loop's per-cycle fault and per-axis feedforward flags |
 | `msg/Payload.msg` | payload-agnostic box/cylinder description |
 | `msg/CollisionScene.msg` | framed obstacle collection |
 | `msg/CollisionPrimitive.msg` | one obstacle shape, pose, dimensions, provenance |
@@ -105,7 +113,15 @@ shape values `SHAPE_BOX=1`, `SHAPE_CYLINDER=2`, and `SHAPE_SPHERE=3`.
 `PlanGrip.phase` uses `PHASE_DESCEND=1`, `PHASE_CLOSE=2`,
 `PHASE_OPEN=3`, and `PHASE_LIFT=4`. Supervisor mode and fault constants are
 defined in `msg/SupervisorStatus.msg` and are intentionally not duplicated in
-service definitions.
+service definitions — nor in `msg/VelocityControllerHealth.msg`, whose `fault`
+field carries the same `FAULT_*` numbering so that the supervisor merges a code
+rather than translating one.
+
+`VelocityControllerHealth.joint_names` and `feedforward_applied` are parallel
+arrays fixed at the six actuated axes. The names are carried on the wire rather
+than assumed because the sixth valve channel drives `q9_left_rail_joint` on the
+PZS100 and `theta10_outer_jaw_joint` on the 7040, and because naming the axis is
+what lets a panel say which calibration is missing.
 
 ## Compatibility boundaries
 

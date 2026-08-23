@@ -80,6 +80,12 @@ EXPECTED_SCHEMAS = {
         "bool deadman_held",
         "string message",
     ],
+    "msg/VelocityControllerHealth.msg": [
+        "std_msgs/Header header",
+        "uint8 fault",
+        "string[6] joint_names",
+        "bool[6] feedforward_applied",
+    ],
     "srv/PlanGrip.srv": [
         "uint8 PHASE_DESCEND=1",
         "uint8 PHASE_CLOSE=2",
@@ -127,6 +133,7 @@ def test_all_interfaces_have_exact_frozen_schema():
                 "PayloadEstimate",
                 "PendulumState",
                 "SupervisorStatus",
+                "VelocityControllerHealth",
             )
         ],
         *[f"srv/{name}.srv" for name in ("PlanGrip", "PlanMotion", "SetMode")],
