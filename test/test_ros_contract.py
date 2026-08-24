@@ -25,6 +25,7 @@ from crane_msgs.msg import (
     PayloadEstimate,
     PendulumState,
     SupervisorStatus,
+    SwaySettled,
     VelocityControllerHealth,
 )
 from crane_msgs.srv import PlanGrip, PlanMotion, SetMode
@@ -123,6 +124,14 @@ def _stream_contracts():
             SupervisorStatus,
             _qos(),
             _message(SupervisorStatus),
+            "",
+        ),
+        StreamContract(
+            "/crane/sway_settled",
+            "crane_msgs/msg/SwaySettled",
+            SwaySettled,
+            _qos(),
+            _message(SwaySettled),
             "",
         ),
         StreamContract(

@@ -14,6 +14,7 @@ set(msg_files
   "msg/PayloadEstimate.msg"
   "msg/PendulumState.msg"
   "msg/SupervisorStatus.msg"
+  "msg/SwaySettled.msg"
   "msg/VelocityControllerHealth.msg"
 )
 

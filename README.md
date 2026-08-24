@@ -14,7 +14,7 @@ boundaries. Their types are intentionally not copied into this package.
 
 Public fields, field order, constants, defaults, QoS, and frame semantics are
 frozen before algorithm packages depend on them. The schema test compares all
-ten source definitions, including every field and constant. Breaking a
+eleven source definitions, including every field and constant. Breaking a
 contract requires updating the wiki and this package in the same change.
 
 Adding a definition is not breaking it. PRD §15's amendment rule is
@@ -39,6 +39,7 @@ policy. Every listed depth is `keep last`.
 | `/crane/reference` | `trajectory_msgs/JointTrajectory` | action frontend/planner adapter → MPC, supervisor | per motion | reliable, transient-local | joint space; `header.frame_id` empty |
 | `/crane/velocity_controller/health` | `crane_msgs/VelocityControllerHealth` | `crane_velocity_controller` → supervisor | 20 Hz | reliable, depth 1 | status data; `header.frame_id` empty |
 | `/crane/supervisor/status` | `crane_msgs/SupervisorStatus` | supervisor → task, operator | 20 Hz | reliable, depth 1 | status data; `header.frame_id` empty |
+| `/crane/sway_settled` | `crane_msgs/SwaySettled` | supervisor → task, operator | 20 Hz | reliable, depth 1 | status data; `header.frame_id` empty |
 | `/crane/remote_ctrl_states` | `epsilon_crane_msgs/RemoteCtrlStates` | GPIO controller → supervisor, task | 20 Hz | reliable, depth 1 | no geometric frame |
 | `/crane/collision_scene` | `crane_msgs/CollisionScene` | CBS world model → planner | on change | reliable, transient-local | geometric data in `K0_mounting_base` |
 | `/cbs/block_world_model` | `concrete_block_world_model_interfaces/BlockArray` | CBS world model → task, planner | on change | reliable, transient-local | geometric data in `world` |
@@ -99,6 +100,7 @@ The source files are the normative field order and defaults:
 | `msg/PendulumState.msg` | passive tip/tilt position, velocity, covariance, and health |
 | `msg/PayloadEstimate.msg` | mass and K8 payload moment estimate |
 | `msg/SupervisorStatus.msg` | mode, fault, tracking, working-cell, deadman state |
+| `msg/SwaySettled.msg` | the three-valued settled predicate and the two rates it was decided from |
 | `msg/VelocityControllerHealth.msg` | the inner loop's per-cycle fault and per-axis feedforward flags |
 | `msg/Payload.msg` | payload-agnostic box/cylinder description |
 | `msg/CollisionScene.msg` | framed obstacle collection |
@@ -122,6 +124,31 @@ arrays fixed at the six actuated axes. The names are carried on the wire rather
 than assumed because the sixth valve channel drives `q9_left_rail_joint` on the
 PZS100 and `theta10_outer_jaw_joint` on the 7040, and because naming the axis is
 what lets a panel say which calibration is missing.
+
+`SwaySettled.settled` uses `SETTLED_UNKNOWN=0`, `SETTLED_NO=1`, and
+`SETTLED_YES=2`. Zero is the *unknown* state deliberately: a default-constructed
+message, a field a producer forgot to fill and a consumer reading the wrong byte
+then all say "not answerable" rather than "the load is hanging still". The
+predicate is three-valued rather than boolean because an absent, stale or
+unusable passive-state estimate makes settledness unknowable, and unknowable must
+not read as settled — a grip action gated on a boolean would descend onto a
+swinging block the moment a bracketing IMU stopped answering
+([[control_architecture]] §5 row 7 and §5.3).
+
+### Why this message and not `diagnostic_msgs/DiagnosticArray`
+
+Settled, `DiagnosticArray` was weighed against this route and lost; it is
+recorded here so it is not re-opened. `diagnostic_msgs/DiagnosticArray` carries a
+stamped tri-state with a cause and is the ROS-idiomatic shape for one, and it is
+part of Humble's `common_interfaces` — the same set `std_srvs` comes from. Two
+things decided against it. The supervisor's other stream is already
+`crane_msgs`-typed, so an operator panel that renders both renders **one
+numbering** rather than a `SupervisorStatus` fault code beside a
+`DiagnosticStatus` level that means something else; and `diagnostic_msgs` is not
+in [`wiki/implementation/libraries.md`](../../wiki/implementation/libraries.md),
+so taking it would have been a new dependency for a message this package can
+carry itself. Adding this definition is not breaking anything: PRD §15's rule is
+additive-only without ceremony, and no existing field moved.
 
 ## Compatibility boundaries
 

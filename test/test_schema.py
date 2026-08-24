@@ -80,6 +80,15 @@ EXPECTED_SCHEMAS = {
         "bool deadman_held",
         "string message",
     ],
+    "msg/SwaySettled.msg": [
+        "uint8 SETTLED_UNKNOWN=0",
+        "uint8 SETTLED_NO=1",
+        "uint8 SETTLED_YES=2",
+        "std_msgs/Header header",
+        "uint8 settled",
+        "float64[2] velocity",
+        "string message",
+    ],
     "msg/VelocityControllerHealth.msg": [
         "std_msgs/Header header",
         "uint8 fault",
@@ -133,6 +142,7 @@ def test_all_interfaces_have_exact_frozen_schema():
                 "PayloadEstimate",
                 "PendulumState",
                 "SupervisorStatus",
+                "SwaySettled",
                 "VelocityControllerHealth",
             )
         ],
