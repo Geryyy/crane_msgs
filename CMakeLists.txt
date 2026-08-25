@@ -13,6 +13,7 @@ set(msg_files
   "msg/Payload.msg"
   "msg/PayloadEstimate.msg"
   "msg/PendulumState.msg"
+  "msg/SolverHealth.msg"
   "msg/SupervisorStatus.msg"
   "msg/SwaySettled.msg"
   "msg/VelocityControllerHealth.msg"

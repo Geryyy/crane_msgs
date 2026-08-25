@@ -24,6 +24,7 @@ from crane_msgs.msg import (
     CollisionScene,
     PayloadEstimate,
     PendulumState,
+    SolverHealth,
     SupervisorStatus,
     SwaySettled,
     VelocityControllerHealth,
@@ -108,6 +109,14 @@ def _stream_contracts():
             JointTrajectory,
             _qos(transient_local=True),
             _message(JointTrajectory),
+            "",
+        ),
+        StreamContract(
+            "/crane/mpc/solver_health",
+            "crane_msgs/msg/SolverHealth",
+            SolverHealth,
+            _qos(),
+            _message(SolverHealth),
             "",
         ),
         StreamContract(
