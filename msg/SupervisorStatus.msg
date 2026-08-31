@@ -11,6 +11,7 @@ uint8 FAULT_STATE_HEALTH=5
 uint8 FAULT_REFERENCE_STALE=6
 uint8 FAULT_ESTOP=7
 uint8 FAULT_INTERLOCK=8
+uint8 FAULT_NOT_COMMISSIONED=9
 std_msgs/Header header
 uint8 mode
 uint8 fault

@@ -71,6 +71,7 @@ EXPECTED_SCHEMAS = {
         "uint8 FAULT_REFERENCE_STALE=6",
         "uint8 FAULT_ESTOP=7",
         "uint8 FAULT_INTERLOCK=8",
+        "uint8 FAULT_NOT_COMMISSIONED=9",
         "std_msgs/Header header",
         "uint8 mode",
         "uint8 fault",
@@ -78,6 +79,21 @@ EXPECTED_SCHEMAS = {
         "bool inside_working_cell",
         "bool deadman_held",
         "string message",
+    ],
+    "msg/SwaySettled.msg": [
+        "uint8 SETTLED_UNKNOWN=0",
+        "uint8 SETTLED_NO=1",
+        "uint8 SETTLED_YES=2",
+        "std_msgs/Header header",
+        "uint8 settled",
+        "float64[2] velocity",
+        "string message",
+    ],
+    "msg/VelocityControllerHealth.msg": [
+        "std_msgs/Header header",
+        "uint8 fault",
+        "string[6] joint_names",
+        "bool[6] feedforward_applied",
     ],
     "srv/PlanGrip.srv": [
         "uint8 PHASE_DESCEND=1",
@@ -126,6 +142,8 @@ def test_all_interfaces_have_exact_frozen_schema():
                 "PayloadEstimate",
                 "PendulumState",
                 "SupervisorStatus",
+                "SwaySettled",
+                "VelocityControllerHealth",
             )
         ],
         *[f"srv/{name}.srv" for name in ("PlanGrip", "PlanMotion", "SetMode")],
