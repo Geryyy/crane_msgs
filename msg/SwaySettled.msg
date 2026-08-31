@@ -18,9 +18,8 @@ uint8 SETTLED_NO=1
 uint8 SETTLED_YES=2
 std_msgs/Header header
 uint8 settled
-# dq_u [tip, tilt], rad/s -- the rates the verdict above was decided from, in the
-# order crane_msgs/PendulumState publishes them. Carried because it is what the
-# decision was made from: a consumer that disagrees with the verdict can see why.
+# dq_u [tip, tilt], rad/s -- the rates the verdict above was decided from, in
+# that order. Carried because it is what the decision was made from: a consumer that disagrees with the verdict can see why.
 # The rate and not the angle, deliberately -- the published angle is read out on
 # the nominal hinge axes and carries an uncalibrated constant offset, while the
 # rate is composed from the two gyro readings through the known chain and does

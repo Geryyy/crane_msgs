@@ -1,9 +1,4 @@
-"""Hardware-free ROS graph tests for the crane_msgs contract.
-
-These tests intentionally create only in-process publishers and service
-servers.  They do not start planner, controller, supervisor, or hardware
-nodes.  The DDS graph and delivered messages are the contract under test.
-"""
+"""Hardware-free ROS graph tests for the crane_msgs contract."""
 
 import os
 import time
@@ -12,10 +7,7 @@ from pathlib import Path
 
 import pytest
 
-# Some developer shells export this variable as an empty string. Fast DDS
-# treats an empty-but-present path as a profile filename and logs a realpath
-# failure during participant creation. The contract test does not require a
-# custom transport profile, so isolate it from that ambient shell setting.
+# Ignore an empty Fast DDS profile path; this test needs no custom profile.
 if not os.environ.get("FASTRTPS_DEFAULT_PROFILES_FILE"):
     os.environ.pop("FASTRTPS_DEFAULT_PROFILES_FILE", None)
 
@@ -23,12 +15,12 @@ import rclpy
 from crane_msgs.msg import (
     CollisionScene,
     PayloadEstimate,
-    PendulumState,
+    SolverHealth,
     SupervisorStatus,
     SwaySettled,
     VelocityControllerHealth,
 )
-from crane_msgs.srv import PlanGrip, PlanMotion, SetMode
+from crane_msgs.srv import PlanMotion, SetMode
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from std_msgs.msg import Header
@@ -39,7 +31,7 @@ TEST_NODE_NAME = "crane_msgs_ros_contract_test"
 
 @dataclass(frozen=True)
 class StreamContract:
-    """One streamed endpoint and the message/frame expected on it."""
+    """Expected topic type, QoS, message, and frame."""
 
     name: str
     type_name: str
@@ -50,7 +42,7 @@ class StreamContract:
 
 
 def _qos(*, transient_local=False):
-    """Build the exact reliable depth-one contract QoS."""
+    """Build the contract QoS."""
     return QoSProfile(
         depth=1,
         reliability=ReliabilityPolicy.RELIABLE,
@@ -69,23 +61,15 @@ def _header(frame_id):
 
 
 def _message(message_type, frame_id=""):
-    """Construct a message without relying on generated kwarg support."""
+    """Construct a message with an optional frame."""
     message = message_type()
     message.header = _header(frame_id)
     return message
 
 
 def _stream_contracts():
-    """Return every new streamed crane_msgs/trajectory contract."""
+    """Return all streamed contracts."""
     return (
-        StreamContract(
-            "/crane/pendulum_state",
-            "crane_msgs/msg/PendulumState",
-            PendulumState,
-            _qos(),
-            _message(PendulumState),
-            "",
-        ),
         StreamContract(
             "/crane/payload_estimate",
             "crane_msgs/msg/PayloadEstimate",
@@ -108,6 +92,14 @@ def _stream_contracts():
             JointTrajectory,
             _qos(transient_local=True),
             _message(JointTrajectory),
+            "",
+        ),
+        StreamContract(
+            "/crane/mpc/solver_health",
+            "crane_msgs/msg/SolverHealth",
+            SolverHealth,
+            _qos(),
+            _message(SolverHealth),
             "",
         ),
         StreamContract(
@@ -146,7 +138,7 @@ def _stream_contracts():
 
 
 def _wait_until(node, predicate, timeout_sec=5.0):
-    """Spin a test node until a DDS condition becomes true."""
+    """Spin until a DDS condition is true or times out."""
     deadline = time.monotonic() + timeout_sec
     while time.monotonic() < deadline:
         rclpy.spin_once(node, timeout_sec=0.05)
@@ -157,13 +149,11 @@ def _wait_until(node, predicate, timeout_sec=5.0):
 
 @pytest.fixture(scope="module")
 def contract_node():
-    """Create one ROS node for all in-process graph assertions."""
+    """Create the shared test node."""
     fastdds_profile = os.environ.get("FASTRTPS_DEFAULT_PROFILES_FILE")
     scrubbed_profile = False
     if not fastdds_profile or not Path(fastdds_profile).is_file():
-        # An empty/stale profile variable makes Fast DDS emit a realpath
-        # error before discovery.  It is an environment defect, not part of
-        # this hardware-free contract test, so isolate it during init.
+        # Ignore an empty or stale profile path during node initialization.
         os.environ.pop("FASTRTPS_DEFAULT_PROFILES_FILE", None)
         scrubbed_profile = True
     rclpy.init(args=None)
@@ -178,7 +168,7 @@ def contract_node():
 
 
 def test_streamed_topics_have_exact_graph_qos_types_and_frames(contract_node):
-    """Assert graph endpoint metadata and delivered frame semantics."""
+    """Check topic types, QoS, delivery, and frames."""
     contracts = _stream_contracts()
     received = {}
     publishers = []
@@ -218,10 +208,7 @@ def test_streamed_topics_have_exact_graph_qos_types_and_frames(contract_node):
         ]
         assert len(endpoints) == 1
         qos = endpoints[0].qos_profile
-        # Some Humble RMWs report endpoint history/depth as UNKNOWN/0 even
-        # though the created entities retain the requested depth.  Check the
-        # graph's transport policies and both local entity profiles, while
-        # retaining a strict depth check when the RMW exposes it.
+        # Some RMWs report graph depth as UNKNOWN/0; verify local depth too.
         assert publishers[contracts.index(contract)].qos_profile.depth == 1
         assert subscriptions[contracts.index(contract)].qos_profile.depth == 1
         if qos.depth:
@@ -236,8 +223,7 @@ def test_streamed_topics_have_exact_graph_qos_types_and_frames(contract_node):
         assert isinstance(message, contract.message_type)
         assert message.header.frame_id == contract.frame_id
 
-    # Keep the local entities alive through delivery and make the test's
-    # lifetime explicit; destruction is handled by the node fixture.
+    # Keep entities alive through delivery; the fixture destroys them.
     assert len(publishers) == len(subscriptions) == len(contracts)
 
 
@@ -245,14 +231,13 @@ def test_streamed_topics_have_exact_graph_qos_types_and_frames(contract_node):
     ("service_type", "service_name", "type_name"),
     [
         (PlanMotion, "/crane/plan_motion", "crane_msgs/srv/PlanMotion"),
-        (PlanGrip, "/crane/plan_grip", "crane_msgs/srv/PlanGrip"),
         (SetMode, "/crane/set_mode", "crane_msgs/srv/SetMode"),
     ],
 )
 def test_service_servers_have_exact_names_and_explicit_failure_defaults(
     contract_node, service_type, service_name, type_name
 ):
-    """Call each mock server and require a useful failure response."""
+    """Check service names, types, and failure responses."""
 
     def callback(_request, response):
         response.success = False

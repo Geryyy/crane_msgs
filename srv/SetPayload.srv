@@ -1,0 +1,5 @@
+crane_msgs/Payload payload
+---
+bool success
+string message
+float64 active_mass

@@ -12,7 +12,7 @@ set(msg_files
   "msg/CollisionScene.msg"
   "msg/Payload.msg"
   "msg/PayloadEstimate.msg"
-  "msg/PendulumState.msg"
+  "msg/SolverHealth.msg"
   "msg/SupervisorStatus.msg"
   "msg/SwaySettled.msg"
   "msg/VelocityControllerHealth.msg"
@@ -22,6 +22,7 @@ set(srv_files
   "srv/PlanGrip.srv"
   "srv/PlanMotion.srv"
   "srv/SetMode.srv"
+  "srv/SetPayload.srv"
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}

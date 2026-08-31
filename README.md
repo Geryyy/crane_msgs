@@ -32,7 +32,6 @@ policy. Every listed depth is `keep last`.
 | Absolute topic | Type | Publisher → subscriber | Rate | QoS | Frame semantics |
 |---|---|---|---:|---|---|
 | `/joint_states` | `sensor_msgs/JointState` | `joint_state_broadcaster` → all | 100 Hz | reliable, depth 1 | no frame field |
-| `/crane/pendulum_state` | `crane_msgs/PendulumState` | `pendulum_state_broadcaster` → MPC, supervisor | 100 Hz | reliable, depth 1 | joint space; `header.frame_id` empty |
 | `/crane/hydraulics` | `epsilon_crane_msgs/Hydraulics` | `sensor_data_broadcaster` → estimator, diagnostics | 100 Hz | best effort, depth 1 | no geometric frame |
 | `/crane/payload_estimate` | `crane_msgs/PayloadEstimate` | `payload_estimator` → planner, MPC, world model | 10 Hz | reliable, transient-local | `K8_rotator_lower_part`; `m_r_x/m_r_y` are in K8 |
 | `/crane/mpc/horizon` | `trajectory_msgs/JointTrajectory` | `crane_mpc` → `crane_velocity_controller` | 25 Hz | reliable, depth 1 | joint space; `header.frame_id` empty |
@@ -44,8 +43,7 @@ policy. Every listed depth is `keep last`.
 | `/crane/collision_scene` | `crane_msgs/CollisionScene` | CBS world model → planner | on change | reliable, transient-local | geometric data in `K0_mounting_base` |
 | `/cbs/block_world_model` | `concrete_block_world_model_interfaces/BlockArray` | CBS world model → task, planner | on change | reliable, transient-local | geometric data in `world` |
 
-`/joint_states` and `/crane/pendulum_state` are reliable despite being sensor
-data because they feed control. QoS is selected by the consumer's safety and
+`/joint_states` is reliable despite being sensor data because it feeds control. QoS is selected by the consumer's safety and
 timing role, not by the fact that the producer is a sensor.
 
 `/crane/mpc/horizon` is the only topic that moves the crane. A trajectory
@@ -58,7 +56,7 @@ its claimed state interfaces, never from `/crane/hydraulics`.
 - A streamed message with a header sets `header.stamp`.
 - A `JointTrajectory` header stamp is the absolute time its first point is
   valid, not the publication time.
-- Joint-space `JointTrajectory`, `PendulumState`, and status data have no
+- Joint-space `JointTrajectory` and status data have no
   geometric expression frame; their `header.frame_id` is the empty string.
 - Geometric data must name its frame. Planning geometry is in
   `K0_mounting_base`; task and perception geometry is in `world`.
@@ -79,14 +77,16 @@ successful result.
 | Absolute service | Type | Server | Purpose |
 |---|---|---|---|
 | `/crane/plan_motion` | `crane_msgs/PlanMotion` | `crane_planner` | native path and timing entry point |
-| `/crane/plan_grip` | `crane_msgs/PlanGrip` | `crane_planner` | descend, close/open, and lift primitives |
+| `/crane/plan_grip` | `crane_msgs/PlanGrip` | no provider in `crane_planning` | retained compatibility schema; grip trajectories are served by `concrete_block_motion_planning/grip_traj_movement` |
 | `/crane/set_mode` | `crane_msgs/SetMode` | `crane_supervisor` | request a control mode |
 | `/crane/clear_fault` | `std_srvs/Trigger` | `crane_supervisor` | acknowledge and clear a latched fault |
 | `/controller_manager/switch_controller` | `controller_manager_msgs/SwitchController` | ros2_control | serialized controller ownership; requests go through the supervisor |
 | `/cbs/world_model/*` | existing CBS interfaces | CBS world model | carried over unchanged |
 | `/cbs/wall_plan/get_next_assembly_task` | `concrete_block_assembly_interfaces/GetNextAssemblyTask` | assembly planner | carried over unchanged |
 
-`PlanMotion.goal` and `PlanGrip.goal` are `PoseStamped` geometry. Callers hold
+`PlanMotion.goal` and the retained `PlanGrip.goal` schema use `PoseStamped` geometry. `crane_planning`
+does not provide `/crane/plan_grip`; the authoritative grip-motion service is
+`concrete_block_motion_planning/grip_traj_movement`. Callers hold
 task/perception goals in `world`; the assembly boundary converts a motion goal
 to `K0_mounting_base` before calling the native planner. `PlanMotion.tcp_path`
 is visualization-only and is not a command stream.
@@ -97,7 +97,6 @@ The source files are the normative field order and defaults:
 
 | Definition | Purpose |
 |---|---|
-| `msg/PendulumState.msg` | passive tip/tilt position, velocity, covariance, and health |
 | `msg/PayloadEstimate.msg` | mass and K8 payload moment estimate |
 | `msg/SupervisorStatus.msg` | mode, fault, tracking, working-cell, deadman state |
 | `msg/SwaySettled.msg` | the three-valued settled predicate and the two rates it was decided from |
