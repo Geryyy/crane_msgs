@@ -31,6 +31,12 @@ EXPECTED_SCHEMAS = {
         "std_msgs/Header header",
         "crane_msgs/CollisionPrimitive[] primitives",
     ],
+    "msg/JointPath.msg": [
+        "std_msgs/Header header",
+        "string[] joint_names",
+        "float64[] q_path",
+        "builtin_interfaces/Duration duration",
+    ],
     "msg/Payload.msg": [
         "uint8 SHAPE_NONE=0",
         "uint8 SHAPE_BOX=1",
@@ -164,6 +170,7 @@ def test_all_interfaces_have_exact_frozen_schema():
             for name in (
                 "CollisionPrimitive",
                 "CollisionScene",
+                "JointPath",
                 "Payload",
                 "PayloadEstimate",
                 "SolverHealth",

@@ -14,6 +14,7 @@ if not os.environ.get("FASTRTPS_DEFAULT_PROFILES_FILE"):
 import rclpy
 from crane_msgs.msg import (
     CollisionScene,
+    JointPath,
     PayloadEstimate,
     SolverHealth,
     SupervisorStatus,
@@ -92,6 +93,14 @@ def _stream_contracts():
             JointTrajectory,
             _qos(transient_local=True),
             _message(JointTrajectory),
+            "",
+        ),
+        StreamContract(
+            "/crane/joint_path",
+            "crane_msgs/msg/JointPath",
+            JointPath,
+            _qos(transient_local=True),
+            _message(JointPath),
             "",
         ),
         StreamContract(

@@ -36,6 +36,7 @@ policy. Every listed depth is `keep last`.
 | `/crane/payload_estimate` | `crane_msgs/PayloadEstimate` | `payload_estimator` → planner, MPC, world model | 10 Hz | reliable, transient-local | `K8_rotator_lower_part`; `m_r_x/m_r_y` are in K8 |
 | `/crane/mpc/horizon` | `trajectory_msgs/JointTrajectory` | `crane_mpc` → `crane_velocity_controller` | 25 Hz | reliable, depth 1 | joint space; `header.frame_id` empty |
 | `/crane/reference` | `trajectory_msgs/JointTrajectory` | action frontend/planner adapter → MPC, supervisor | per motion | reliable, transient-local | joint space; `header.frame_id` empty |
+| `/crane/joint_path` | `crane_msgs/JointPath` | planner → MPC | per motion | reliable, transient-local | joint space; `header.frame_id` empty |
 | `/crane/velocity_controller/health` | `crane_msgs/VelocityControllerHealth` | `crane_velocity_controller` → supervisor | 20 Hz | reliable, depth 1 | status data; `header.frame_id` empty |
 | `/crane/supervisor/status` | `crane_msgs/SupervisorStatus` | supervisor → task, operator | 20 Hz | reliable, depth 1 | status data; `header.frame_id` empty |
 | `/crane/sway_settled` | `crane_msgs/SwaySettled` | supervisor → task, operator | 20 Hz | reliable, depth 1 | status data; `header.frame_id` empty |
@@ -48,7 +49,10 @@ timing role, not by the fact that the producer is a sensor.
 
 `/crane/mpc/horizon` is the only topic that moves the crane. A trajectory
 follower is an alternative producer of the same type on that same topic, not
-a second command path. The velocity controller reads hydraulic pressures from
+a second command path. `/crane/reference` and `/crane/joint_path` are
+one plan in two forms and carry the same `header.stamp`: the time resample a
+trajectory follower needs, and the geometry a path-following cost needs, which
+chooses where on the path to be and so cannot use a schedule. The velocity controller reads hydraulic pressures from
 its claimed state interfaces, never from `/crane/hydraulics`.
 
 ### Time and frames

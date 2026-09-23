@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.8)
 project(crane_msgs)
 
 find_package(ament_cmake REQUIRED)
+find_package(builtin_interfaces REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(std_msgs REQUIRED)
@@ -10,6 +11,7 @@ find_package(trajectory_msgs REQUIRED)
 set(msg_files
   "msg/CollisionPrimitive.msg"
   "msg/CollisionScene.msg"
+  "msg/JointPath.msg"
   "msg/Payload.msg"
   "msg/PayloadEstimate.msg"
   "msg/SolverHealth.msg"
@@ -28,7 +30,7 @@ set(srv_files
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${msg_files}
   ${srv_files}
-  DEPENDENCIES geometry_msgs std_msgs trajectory_msgs
+  DEPENDENCIES builtin_interfaces geometry_msgs std_msgs trajectory_msgs
 )
 
 if(BUILD_TESTING)
