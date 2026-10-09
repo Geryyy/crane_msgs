@@ -62,8 +62,10 @@ int32 iterations       # under SQP_RTI this is one, every cycle (mpc 5)
 int32 qp_status
 int32 qp_iterations
 
-# Requirement 3. The budget is wiki/mpc.md 4's `< 30 ms` and it is enforced
-# rather than measured: on an overrun `applied_previous_solution` is true and
+# Requirement 3. The budget is wiki/mpc.md 4's one T_s, 60 ms **end to end**
+# from the /joint_states stamp -- not acados' solve_time, which reads inside it
+# on every late cycle. It is enforced rather than measured: on an overrun
+# `applied_previous_solution` is true and
 # what went out on /crane/mpc/horizon is the previous solution shifted by one
 # step, with its last stage duplicated (mpc 6). It is also true on any other
 # non-convergence, because mpc 6 gives failure the same fallback.
