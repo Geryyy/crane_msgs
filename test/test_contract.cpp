@@ -5,7 +5,6 @@
 #include "crane_msgs/msg/solver_health.hpp"
 #include "crane_msgs/msg/supervisor_status.hpp"
 #include "crane_msgs/msg/sway_settled.hpp"
-#include "crane_msgs/srv/plan_grip.hpp"
 
 TEST(CraneMsgsContract, PayloadShapesAreFrozen)
 {
@@ -52,10 +51,8 @@ TEST(CraneMsgsContract, SolverHealthCarriesSupervisorFaultCodesUnrenumbered)
   EXPECT_EQ(fresh.joint_names.size(), 6U);
 }
 
-TEST(CraneMsgsContract, CollisionShapesAndGripPhasesAreFrozen)
+TEST(CraneMsgsContract, CollisionShapesAreFrozen)
 {
   EXPECT_EQ(crane_msgs::msg::CollisionScene::SHAPE_BOX, 1U);
   EXPECT_EQ(crane_msgs::msg::CollisionScene::SHAPE_SPHERE, 3U);
-  EXPECT_EQ(crane_msgs::srv::PlanGrip::Request::PHASE_DESCEND, 1U);
-  EXPECT_EQ(crane_msgs::srv::PlanGrip::Request::PHASE_LIFT, 4U);
 }

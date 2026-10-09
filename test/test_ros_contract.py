@@ -15,13 +15,12 @@ import rclpy
 from crane_msgs.msg import (
     CollisionScene,
     JointPath,
-    PayloadEstimate,
     SolverHealth,
     SupervisorStatus,
     SwaySettled,
     VelocityControllerHealth,
 )
-from crane_msgs.srv import PlanMotion, SetMode
+from crane_msgs.srv import SetMode
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from std_msgs.msg import Header
@@ -71,14 +70,6 @@ def _message(message_type, frame_id=""):
 def _stream_contracts():
     """Return all streamed contracts."""
     return (
-        StreamContract(
-            "/crane/payload_estimate",
-            "crane_msgs/msg/PayloadEstimate",
-            PayloadEstimate,
-            _qos(transient_local=True),
-            _message(PayloadEstimate, "K8_rotator_lower_part"),
-            "K8_rotator_lower_part",
-        ),
         StreamContract(
             "/crane/mpc/horizon",
             "trajectory_msgs/msg/JointTrajectory",
@@ -239,7 +230,6 @@ def test_streamed_topics_have_exact_graph_qos_types_and_frames(contract_node):
 @pytest.mark.parametrize(
     ("service_type", "service_name", "type_name"),
     [
-        (PlanMotion, "/crane/plan_motion", "crane_msgs/srv/PlanMotion"),
         (SetMode, "/crane/set_mode", "crane_msgs/srv/SetMode"),
     ],
 )

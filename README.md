@@ -13,8 +13,10 @@ code is build output and is not committed.
 boundaries. Their types are intentionally not copied into this package.
 
 Public fields, field order, constants, defaults, QoS, and frame semantics are
-frozen before algorithm packages depend on them. The schema test compares all
-eleven source definitions, including every field and constant. Breaking a
+frozen before algorithm packages depend on them. The schema test compares each
+definition it lists field by field and constant by constant — against a literal
+list, so it catches drift inside a definition and not a definition added to or
+removed from `msg/`, `srv/` (`srv/SetPayload.srv` is not in it). Breaking a
 contract requires updating the wiki and this package in the same change.
 
 Adding a definition is not breaking it. PRD §15's amendment rule is
@@ -33,7 +35,6 @@ policy. Every listed depth is `keep last`.
 |---|---|---|---:|---|---|
 | `/joint_states` | `sensor_msgs/JointState` | `joint_state_broadcaster` → all | 100 Hz | reliable, depth 1 | no frame field |
 | `/crane/hydraulics` | `epsilon_crane_msgs/Hydraulics` | `sensor_data_broadcaster` → estimator, diagnostics | 100 Hz | best effort, depth 1 | no geometric frame |
-| `/crane/payload_estimate` | `crane_msgs/PayloadEstimate` | `payload_estimator` → planner, MPC, world model | 10 Hz | reliable, transient-local | `K8_rotator_lower_part`; `m_r_x/m_r_y` are in K8 |
 | `/crane/mpc/horizon` | `trajectory_msgs/JointTrajectory` | `crane_mpc` → `crane_velocity_controller` | 25 Hz | reliable, depth 1 | joint space; `header.frame_id` empty |
 | `/crane/reference` | `trajectory_msgs/JointTrajectory` | action frontend/planner adapter → MPC, supervisor | per motion | reliable, transient-local | joint space; `header.frame_id` empty |
 | `/crane/joint_path` | `crane_msgs/JointPath` | planner → MPC | per motion | reliable, transient-local | joint space; `header.frame_id` empty |
@@ -65,12 +66,11 @@ its claimed state interfaces, never from `/crane/hydraulics`.
 - Geometric data must name its frame. Planning geometry is in
   `K0_mounting_base`; task and perception geometry is in `world`.
 - The assembly planner performs the only `world` → `K0_mounting_base`
-  conversion when handing goals to `/crane/plan_motion`. The world model
+  conversion when handing a motion goal to the planner. The world model
   publishes `/crane/collision_scene` already in `K0_mounting_base`; no
   downstream consumer converts it again.
-- `Payload.com` is expressed in `K8`; payload-estimate moment fields are also
-  expressed in K8. `CollisionPrimitive.pose` and all primitives in a
-  `CollisionScene` use the scene header frame.
+- `Payload.com` is expressed in `K8`. `CollisionPrimitive.pose` and all
+  primitives in a `CollisionScene` use the scene header frame.
 
 ## Service contract
 
@@ -80,20 +80,20 @@ successful result.
 
 | Absolute service | Type | Server | Purpose |
 |---|---|---|---|
-| `/crane/plan_motion` | `crane_msgs/PlanMotion` | `crane_planner` | native path and timing entry point |
-| `/crane/plan_grip` | `crane_msgs/PlanGrip` | no provider in `crane_planning` | retained compatibility schema; grip trajectories are served by `concrete_block_motion_planning/grip_traj_movement` |
-| `/crane/set_mode` | `crane_msgs/SetMode` | `crane_supervisor` | request a control mode |
-| `/crane/clear_fault` | `std_srvs/Trigger` | `crane_supervisor` | acknowledge and clear a latched fault |
+| `/crane/set_mode` | `crane_msgs/SetMode` | `crane_supervisor` — designed, **not in the tree** | request a control mode |
+| `/crane/clear_fault` | `std_srvs/Trigger` | `crane_supervisor` — designed, **not in the tree** | acknowledge and clear a latched fault |
 | `/controller_manager/switch_controller` | `controller_manager_msgs/SwitchController` | ros2_control | serialized controller ownership; requests go through the supervisor |
 | `/cbs/world_model/*` | existing CBS interfaces | CBS world model | carried over unchanged |
 | `/cbs/wall_plan/get_next_assembly_task` | `concrete_block_assembly_interfaces/GetNextAssemblyTask` | assembly planner | carried over unchanged |
 
-`PlanMotion.goal` and the retained `PlanGrip.goal` schema use `PoseStamped` geometry. `crane_planning`
-does not provide `/crane/plan_grip`; the authoritative grip-motion service is
+**No native planning service is defined here.** `/crane/plan_motion` and
+`/crane/plan_grip` (`PlanMotion`, `PlanGrip`) were deleted in issue 199, having
+never had a server or a client: the planner's one entry is `/a2b_movement`
+(`timber_crane_planning_interfaces/CalcMovement`, adapted inside
+`crane_planner`) and the authoritative grip-motion service is
 `concrete_block_motion_planning/grip_traj_movement`. Callers hold
 task/perception goals in `world`; the assembly boundary converts a motion goal
-to `K0_mounting_base` before calling the native planner. `PlanMotion.tcp_path`
-is visualization-only and is not a command stream.
+to `K0_mounting_base` before calling the planner.
 
 ## Frozen schemas
 
@@ -101,22 +101,18 @@ The source files are the normative field order and defaults:
 
 | Definition | Purpose |
 |---|---|
-| `msg/PayloadEstimate.msg` | mass and K8 payload moment estimate |
 | `msg/SupervisorStatus.msg` | mode, fault, tracking, working-cell, deadman state |
 | `msg/SwaySettled.msg` | the three-valued settled predicate and the two rates it was decided from |
 | `msg/VelocityControllerHealth.msg` | the inner loop's per-cycle fault and per-axis feedforward flags |
 | `msg/Payload.msg` | payload-agnostic box/cylinder description |
 | `msg/CollisionScene.msg` | framed obstacle collection |
 | `msg/CollisionPrimitive.msg` | one obstacle shape, pose, dimensions, provenance |
-| `srv/PlanMotion.srv` | native motion planning request and trajectory response |
-| `srv/PlanGrip.srv` | grip-phase planning request and trajectory response |
 | `srv/SetMode.srv` | supervisor mode request and active-mode response |
 
 `Payload.shape` uses `SHAPE_NONE=0`, `SHAPE_BOX=1`, and
 `SHAPE_CYLINDER=2`. `CollisionPrimitive.shape` uses the corresponding scene
 shape values `SHAPE_BOX=1`, `SHAPE_CYLINDER=2`, and `SHAPE_SPHERE=3`.
-`PlanGrip.phase` uses `PHASE_DESCEND=1`, `PHASE_CLOSE=2`,
-`PHASE_OPEN=3`, and `PHASE_LIFT=4`. Supervisor mode and fault constants are
+Supervisor mode and fault constants are
 defined in `msg/SupervisorStatus.msg` and are intentionally not duplicated in
 service definitions — nor in `msg/VelocityControllerHealth.msg`, whose `fault`
 field carries the same `FAULT_*` numbering so that the supervisor merges a code

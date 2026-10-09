@@ -46,14 +46,6 @@ EXPECTED_SCHEMAS = {
         "float64 mass",
         "geometry_msgs/Point com",
     ],
-    "msg/PayloadEstimate.msg": [
-        "std_msgs/Header header",
-        "float64 mass",
-        "float64 m_r_x",
-        "float64 m_r_y",
-        "float64 r_z",
-        "bool valid",
-    ],
     "msg/SolverHealth.msg": [
         "uint8 SOLVE_UNKNOWN=0",
         "uint8 SOLVE_CONVERGED=1",
@@ -127,31 +119,6 @@ EXPECTED_SCHEMAS = {
         "string[6] joint_names",
         "bool[6] feedforward_applied",
     ],
-    "srv/PlanGrip.srv": [
-        "uint8 PHASE_DESCEND=1",
-        "uint8 PHASE_CLOSE=2",
-        "uint8 PHASE_OPEN=3",
-        "uint8 PHASE_LIFT=4",
-        "uint8 phase",
-        "geometry_msgs/PoseStamped goal",
-        "crane_msgs/Payload payload",
-        "float64 speed_scale 1.0",
-        "---",
-        "bool success",
-        "string message",
-        "trajectory_msgs/JointTrajectory trajectory",
-    ],
-    "srv/PlanMotion.srv": [
-        "geometry_msgs/PoseStamped goal",
-        "crane_msgs/Payload payload",
-        "bool avoid_collisions true",
-        "float64 speed_scale 1.0",
-        "---",
-        "bool success",
-        "string message",
-        "trajectory_msgs/JointTrajectory trajectory",
-        "geometry_msgs/PoseStamped[] tcp_path",
-    ],
     "srv/SetMode.srv": [
         "uint8 mode",
         "---",
@@ -172,14 +139,13 @@ def test_all_interfaces_have_exact_frozen_schema():
                 "CollisionScene",
                 "JointPath",
                 "Payload",
-                "PayloadEstimate",
                 "SolverHealth",
                 "SupervisorStatus",
                 "SwaySettled",
                 "VelocityControllerHealth",
             )
         ],
-        *[f"srv/{name}.srv" for name in ("PlanGrip", "PlanMotion", "SetMode")],
+        "srv/SetMode.srv",
     }
     for relative_path, expected in EXPECTED_SCHEMAS.items():
         assert _schema_lines(relative_path) == expected, relative_path

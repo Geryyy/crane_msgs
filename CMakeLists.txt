@@ -13,7 +13,6 @@ set(msg_files
   "msg/CollisionScene.msg"
   "msg/JointPath.msg"
   "msg/Payload.msg"
-  "msg/PayloadEstimate.msg"
   "msg/SolverHealth.msg"
   "msg/SupervisorStatus.msg"
   "msg/SwaySettled.msg"
@@ -21,8 +20,6 @@ set(msg_files
 )
 
 set(srv_files
-  "srv/PlanGrip.srv"
-  "srv/PlanMotion.srv"
   "srv/SetMode.srv"
   "srv/SetPayload.srv"
 )
