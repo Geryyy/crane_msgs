@@ -36,6 +36,7 @@ EXPECTED_SCHEMAS = {
         "string[] joint_names",
         "float64[] q_path",
         "builtin_interfaces/Duration duration",
+        "float64[] s_profile",
     ],
     "msg/Payload.msg": [
         "uint8 SHAPE_NONE=0",
