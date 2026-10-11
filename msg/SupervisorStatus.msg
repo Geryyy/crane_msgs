@@ -12,6 +12,10 @@ uint8 FAULT_REFERENCE_STALE=6
 uint8 FAULT_ESTOP=7
 uint8 FAULT_INTERLOCK=8
 uint8 FAULT_NOT_COMMISSIONED=9
+# A converged, on-time plan that is not advancing -- the optimizer answering
+# "wait" indefinitely. Distinct from FAULT_SOLVER: nothing about the solver is
+# wrong, so the label must not point the reader at it (issue 269).
+uint8 FAULT_PLAN_STALLED=10
 std_msgs/Header header
 uint8 mode
 uint8 fault

@@ -11,10 +11,12 @@
 # `fault` is a crane_msgs/SupervisorStatus FAULT_* constant and is deliberately
 # not renumbered, exactly as VelocityControllerHealth's is: the supervisor
 # merges the code rather than translating it, and an operator panel renders one
-# numbering. The only code this producer raises is FAULT_SOLVER, which
+# numbering. This producer raises two codes: FAULT_SOLVER, which
 # wiki/control_architecture.md 5 row 3 gives to non-convergence and to a
-# deadline miss alike. **Nothing consumes it yet** -- the supervisor merging it
-# onto /crane/supervisor/status is issue 054.
+# deadline miss alike, and FAULT_PLAN_STALLED for a converged, on-time solve
+# whose plan is not advancing -- a solver label there would name the wrong
+# component (issue 273). **Nothing consumes either yet** -- the supervisor
+# merging them onto /crane/supervisor/status is issue 054.
 
 # Requirement 1. A solve that hit its budget without converging has to be
 # distinguishable from one that converged, so the verdict is three-valued and

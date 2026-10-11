@@ -97,6 +97,7 @@ EXPECTED_SCHEMAS = {
         "uint8 FAULT_ESTOP=7",
         "uint8 FAULT_INTERLOCK=8",
         "uint8 FAULT_NOT_COMMISSIONED=9",
+        "uint8 FAULT_PLAN_STALLED=10",
         "std_msgs/Header header",
         "uint8 mode",
         "uint8 fault",

@@ -20,6 +20,11 @@ TEST(CraneMsgsContract, SupervisorModesAndFaultsAreFrozen)
   EXPECT_EQ(crane_msgs::msg::SupervisorStatus::FAULT_NONE, 0U);
   EXPECT_EQ(crane_msgs::msg::SupervisorStatus::FAULT_INTERLOCK, 8U);
   EXPECT_EQ(crane_msgs::msg::SupervisorStatus::FAULT_NOT_COMMISSIONED, 9U);
+  // A stall is its own code: a converged, on-time solve is not a solver fault.
+  EXPECT_EQ(crane_msgs::msg::SupervisorStatus::FAULT_PLAN_STALLED, 10U);
+  EXPECT_NE(
+    crane_msgs::msg::SupervisorStatus::FAULT_PLAN_STALLED,
+    crane_msgs::msg::SupervisorStatus::FAULT_SOLVER);
 }
 
 TEST(CraneMsgsContract, SwaySettledStatesAreFrozenAndUnknownIsZero)
